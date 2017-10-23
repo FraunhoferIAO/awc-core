@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWC-Example: Variants using Template Elements</title>
+  <link rel="stylesheet" href="../assets/basestyles.css">
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <script src="/dist/awc-core.js"></script>
+
+  <template id="text">
+    <style>
+      :host {
+        display: inline-block;
+        border-radius: 50%;
+        background-color: lightgreen;
+        width: 2em;
+        height: 2em;
+      }
+
+      div {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        line-height: 2em;
+      }
+    </style>
+    <div>Foo</div>
+  </template>
+  <template id="mixed">
+    <style>
+      :host {
+        display: inline-block;
+        height: 2em;
+      }
+
+      img {
+        height: 100%;
+        border-radius: 50%;
+        vertical-align: middle;
+      }
+
+      div {
+        display: inline-block;
+        line-height: 2em;
+        height: 100%;
+        vertical-align: middle;
+      }
+    </style>
+    <img src="">
+    <div>Bar</div>
+  </template>
+  <template id="graphic">
+    <style>
+      :host {
+        display: inline-block;
+        border-radius: 50%;
+        overflow: hidden;
+        width: 2em;
+        height: 2em;
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <img src="">
+  </template>
+  <script>
+    window.addEventListener('WebComponentsReady', function () {
+      class AdaptivePerson extends awc.AdaptiveComponent(HTMLElement) {
+        constructor() {
+          super();
+        }
+
+        static get observedAttributes() {
+          return ['name', 'picture'];
+        }
+
+        get name() {
+          return this.getAttribute('name');
+        }
+
+        set name(val) {
+          this.setAttribute('name', val);
+        }
+
+        get picture() {
+          return this.getAttribute('picture');
+        }
+
+        set picture(val) {
+          this.setAttribute('picture', val);
+        }
+
+        attributeChangedCallback(name, oldValue, newValue) {
+          super.attributeChangedCallback(name, oldValue, newValue);
+          this._update();
+        }
+
+        performAdaptation(profile) {
+          super.performAdaptation(profile);
+          if (window.ShadyCSS) {
+            window.ShadyCSS.styleSubtree(this);
+          }
+          this._update();
+        }
+
+        _update() {
+          if (this._currentVariant != null) {
+            this._currentVariant.name = this.name;
+            this._currentVariant.picture = this.picture;
+          }
+        }
+      }
+
+      class TextPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#text');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'text';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._initial = this.contentRoot.querySelector("div");
+        }
+
+        set name(val) {
+          this._initial.innerText = val.substring(0, 1);
+        }
+      }
+
+      class MixedPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#mixed');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'mixed';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._picture = this.contentRoot.querySelector("img");
+          this._name = this.contentRoot.querySelector("div");
+        }
+
+        set name(val) {
+          this._name.innerText = val;
+        }
+
+        set picture(val) {
+          this._picture.setAttribute('src', val);
+        }
+      }
+
+      class GraphicPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#graphic');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'graphic';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._picture = this.contentRoot.querySelector("img");
+        }
+
+        set picture(val) {
+          this._picture.setAttribute('src', val);
+        }
+      }
+
+      AdaptivePerson.registerVariant(TextPerson);
+      AdaptivePerson.registerVariant(MixedPerson);
+      AdaptivePerson.registerVariant(GraphicPerson);
+
+      AdaptivePerson.defaultVariant = MixedPerson;
+
+      customElements.define('adaptive-person', AdaptivePerson);
+    });
+
+    let profilestore = new awc.ProfileStore(true);
+
+    document.addEventListener('DOMContentLoaded', function () {
+      let inputElm = document.querySelector("#in");
+      inputElm.addEventListener('change', function (e) {
+        e.stopPropagation();
+        profilestore.changeProfile({ 'display-mode': inputElm.value });
+      });
+    });
+  </script>
+
+  <style>
+    adaptive-person {
+      display: block;
+      font-size: 2rem;
+      margin: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Variants using Template Elements</h1>
+  <p>
+    This example demonstrates the implementation of an <code>AdaptiveComponent</code> with multiple 
+    <code>AdaptiveVariants</code> each using a specific <code>&lt;template&gt;</code> element. The contents of these
+    templates are stamped to the component's shadow DOM when the respective variant is selected based on the context.
+  </p>
+  <section>
+    <h2>Context property value</h2>
+    <label for="in">display-mode</label> =
+    <select id="in">
+      <option value="undefined" selected>undefined</option>
+      <option value="text">Text only</option>
+      <option value="mixed">Text and Graphic</option>
+      <option value="graphic">Graphic only</option>
+    </select>
+  </section>
+  <section>
+    <h2>Rendered component</h2>
+    <adaptive-person name="Anna Schmidt" picture="../assets/avatar-anna.png"></adaptive-person>
+    <adaptive-person name="Ben Müller" picture="../assets/avatar-ben.png"></adaptive-person>
+  </section>
+</body>
+</html>

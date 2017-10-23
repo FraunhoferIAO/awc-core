@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AWC-Example: Implemented adaptive paragraph</title>
+  
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <!--Import adaptive web components core  -->
+  <script src="../dist/awc-core.js"></script>
+  <script>
+  window.addEventListener('WebComponentsReady', function() {
+    class AdaptiveParagraph extends awc.AdaptiveComponent(HTMLElement) {
+      constructor() {
+        super();
+      }
+    }
+
+    class NormalParagraph extends awc.AdaptiveVariant {
+      constructor() {
+        super();
+      }
+
+      get template() {
+        let template = document.createDocumentFragment(); // new DocumentFragment();
+        template.appendChild(document.createElement('slot'));
+        return template;
+      }
+
+      static matches(context) {
+        return context['text-complexity'] == 'normal';
+      }
+    }
+
+    class SimplifiedParagraph extends awc.AdaptiveVariant {
+      constructor() {
+        super();
+      }
+
+      get template() {
+        let template = document.createDocumentFragment(); // new DocumentFragment();
+        let slot = document.createElement('slot');
+        slot.setAttribute('name', 'simplified');
+        template.appendChild(slot);
+        return template;
+      }
+
+      static matches(context) {
+        return context['text-complexity'] == 'simplified';
+      }
+    }
+
+    AdaptiveParagraph.registerVariant(NormalParagraph);
+    AdaptiveParagraph.registerVariant(SimplifiedParagraph);
+
+    AdaptiveParagraph.defaultVariant = NormalParagraph;
+
+    customElements.define('adaptive-p', AdaptiveParagraph);
+  });
+
+    document.profilestore = new awc.LocalProfileStore();
+  </script>
+</head>
+<body>
+  <p>This is just a normal text paragraph. It contains some text just to contain text. The text does not even make sense, really.</p>
+  <adaptive-p>
+    <p id="dtext">This text is in deed very complex in its language style and used words.</p>
+    <p id="stext" slot="simplified">This is simple.</p>
+  </adaptive-p>
+  <p>This is just a another normal text paragraph. It again contains some text just to contain text. The text does not even make sense, either.</p>
+
+  <button onclick="document.profilestore.changeProfile({'text-complexity': 'normal'});">Normal</button>
+  <button onclick="document.profilestore.changeProfile({'text-complexity': 'simplified'});">Simplified</button>
+</body>
+</html>

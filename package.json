@@ -1,0 +1,44 @@
+{
+  "name": "awc-core",
+  "version": "0.1.0",
+  "description": "Adaptive Web Components Framework",
+  "main": "dist/awc-core.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FraunhoferIAO/awc-core.git"
+  },
+  "keywords": [
+    "web components",
+    "adaptive",
+    "user interface"
+  ],
+  "author": "Daniel Ziegler <daniel.ziegler@iao.fraunhofer.de>",
+  "license": "BSD-3-Clause-Clear",
+  "dependencies": {},
+  "optionalDependencies": {
+    "@webcomponents/webcomponentsjs": "^1.0.14"
+  },
+  "devDependencies": {
+    "documentation": "^5.3.2",
+    "gulp": "^3.9.1",
+    "gulp-documentation": "^3.1.0",
+    "gulp-header-license": "^1.0.9",
+    "gulp-rename": "^1.2.2",
+    "gulp-systemjs-builder": "^0.15.0",
+    "gulp-uglify": "^3.0.0",
+    "jasmine-core": "^2.6.0",
+    "karma": "^1.4.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-edge-launcher": "^0.4.2",
+    "karma-firefox-launcher": "^1.0.1",
+    "karma-jasmine": "^1.1.0",
+    "karma-spec-reporter": "0.0.26",
+    "karma-systemjs": "^0.16.0",
+    "systemjs": "^0.19.42",
+    "systemjs-plugin-babel": "0.0.19",
+    "uglify-es": "^3.1.5"
+  }
+}

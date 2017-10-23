@@ -1,0 +1,9 @@
+{
+  "server" : {
+    "baseDir": ".",
+    "routes": {
+      "/dist": "../dist",
+      "/doc": "../doc"
+    }
+  }
+}

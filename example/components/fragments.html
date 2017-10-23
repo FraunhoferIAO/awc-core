@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWC-Example: Variants that create Document Fragments</title>
+  <link rel="stylesheet" href="../assets/basestyles.css">
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <script src="/dist/awc-core.js"></script>
+
+  <script>
+    window.addEventListener('WebComponentsReady', function() {
+      document.profilestore = new awc.LocalProfileStore();
+      
+      class AdaptiveClock extends awc.AdaptiveComponent(HTMLElement) {
+        constructor() {
+          super();
+
+          this._time = null;
+
+          this._autoupdater = this._update.bind(this);
+        }
+
+        static get observedAttributes() {
+          let superAttributes = Object.getPrototypeOf(this).observedAttributes;
+          return ['time'].concat(superAttributes);
+        }
+
+        get time() {
+          return this.getAttribute('time');
+        }
+
+        set time(val) {
+          this.setAttribute('time', val);
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          if (this._time == null) {
+            setInterval(this._autoupdater, 1000);
+          }
+
+          this._update();
+        }
+
+        attributeChangedCallback(name, oldValue, newValue) {
+          super.attributeChangedCallback(name, oldValue, newValue);
+
+          if ('time' == name && newValue != null) {
+            this._time = new Date('1970-01-01T' + newValue);
+            this._update();
+
+          } else if ('time' == name) {
+            // Show auto updated current time
+            this._time = null;
+            setInterval(this._autoupdater, 1000);
+            this._update();
+          }
+        }
+
+        _update() {
+          if (this._currentVariant != null) {
+            this._currentVariant.time = this._time != null ? this._time : new Date();
+          }
+        }
+      }
+
+      class TextClock extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+
+          this._time = null;
+        }
+
+        get template() {
+          let template = document.createDocumentFragment();
+          let p = document.createElement('p');
+          p.innerHTML = '<span id="h">hh</span>:<span id="m">mm</span>:<span id="s" >ss</span>';
+          template.appendChild(p);
+          return template;
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._hour = this.contentRoot.querySelector("#h");
+          this._minute = this.contentRoot.querySelector("#m");
+          this._second = this.contentRoot.querySelector("#s");
+
+          this._update();
+        }
+
+        get time() {
+          return this._time;
+        }
+
+        set time(time) {
+          this._time = time;
+
+          this._update();
+        }
+
+        _update() {
+          if (this.contentRoot != null && this._time != null) {
+            let h = this._time.getHours();
+            let m = this._time.getMinutes();
+            let s = this._time.getSeconds();
+                
+            if (h < 10) { h = '0'+h }
+            if (m < 10) { m = '0'+m }
+            if (s < 10) { s = '0'+s }
+                
+            this._hour.innerText = h;
+            this._minute.innerText = m;
+            this._second.innerText = s;
+          }
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'text';
+        }
+      }
+
+      class GraphicClock extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+
+          this._time = null;
+        }
+
+        get template() {
+          let template = document.createDocumentFragment();
+          template.appendChild(document.createElement('canvas'));
+          return template;
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._canvas = this.contentRoot.querySelector('canvas');
+          this._ctx = this._canvas.getContext('2d');
+
+          this._update();
+        }
+
+        get time() {
+          return this._time;
+        }
+
+        set time(time) {
+          this._time = time;
+
+          this._update();
+        }
+
+        _update() {
+          if (this.contentRoot != null && this._time != null) {
+            let center = {x: this._canvas.clientWidth/2, y: this._canvas.clientHeight/2 };
+            let h = this._time.getHours();
+            let m = this._time.getMinutes();
+            let s = this._time.getSeconds();
+
+            this._ctx.clearRect(0, 0, this._canvas.clientWidth, this._canvas.clientHeight);
+            this._ctx.beginPath();
+            this._ctx.arc(center.x, center.y, Math.min(center.x, center.y)-2, Math.PI/-2, (h%12)*Math.PI/6-Math.PI/2);
+            this._ctx.stroke();
+            this._ctx.beginPath();
+            this._ctx.arc(center.x, center.y, Math.min(center.x, center.y)-10, Math.PI/-2, m*Math.PI/30-Math.PI/2);
+            this._ctx.stroke();
+            this._ctx.beginPath();
+            this._ctx.arc(center.x, center.y, Math.min(center.x, center.y)-18, Math.PI/-2, s*Math.PI/30-Math.PI/2);
+            this._ctx.stroke();
+          }
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'graphic';
+        }
+      }
+
+      AdaptiveClock.registerVariant(GraphicClock);
+      AdaptiveClock.registerVariant(TextClock);
+
+      AdaptiveClock.defaultVariant = TextClock;
+      
+      customElements.define('adaptive-clock', AdaptiveClock);
+    });
+
+    let profilestore = new awc.ProfileStore(true);
+
+    document.addEventListener('DOMContentLoaded', function () {
+      let inputElm = document.querySelector("#in");
+      inputElm.addEventListener('change', function (e) {
+        e.stopPropagation();
+        profilestore.changeProfile({ 'display-mode': inputElm.value });
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Variants that create Document Fragments</h1>
+  <p>
+    This example demonstrates the implementation of <code>AdaptiveVariant</code>s that create 
+    <code>DocumentFragment</code>s on-the-fly in their <code>template</code> getters.
+  </p>
+  <section>
+    <h2>Context property value</h2>
+    <label for="in">display-mode</label> =
+    <select id="in">
+      <option value="undefined" selected>undefined</option>
+      <option value="text">Text only</option>
+      <option value="graphic">Graphic only</option>
+    </select>
+  </section>
+  <section>
+    <h2>Rendered component</h2>
+    <adaptive-clock></adaptive-clock>
+    <adaptive-clock time="22:33:44"></adaptive-clock>
+  </section>
+</body>
+</html>

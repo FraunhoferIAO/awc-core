@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWC-Example: Context Styles in Component Templates</title>
+  <link rel="stylesheet" href="../assets/basestyles.css">
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <script src="/dist/awc-core.js"></script>
+
+  <style>
+    input[type="range"] {
+      margin: 0;
+    }
+
+    input[type="range"] {
+      display: inline-block;
+      width: 100%;
+      padding: 6px 0;
+      border: none;
+    }
+
+    adaptive-person {
+      display: block;
+      font-size: 2rem;
+      margin: 1rem;
+    }
+  </style>
+
+<template id="text">
+    <style>
+      :host {
+        display: inline-block;
+        border-radius: 50%;
+        background-color: lightgreen;
+        width: 2em;
+        height: 2em;
+      }
+
+      div {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        line-height: 2em;
+      }
+    </style>
+    <context-style>
+      @context (foobar < 25) {
+        :host {
+          background-color: white;
+          color: black;
+          border: 1px solid black;
+        }
+      }
+      @context (foobar > 75) {
+        :host {
+          background-color: black;
+          color: white;
+        }
+      }
+    </context-style>
+    <div>Foo</div>
+  </template>
+  <template id="mixed">
+    <style>
+      :host {
+        display: inline-block;
+        height: 2em;
+      }
+
+      img {
+        height: 100%;
+        border-radius: 50%;
+        vertical-align: middle;
+      }
+
+      div {
+        display: inline-block;
+        line-height: 2em;
+        height: 100%;
+        vertical-align: middle;
+      }
+    </style>
+    <context-style>
+      @context (foobar < 30) {
+        div {
+          font-weight: bold;
+        }
+      }
+      @context (foobar > 80) {
+        div {
+          font-size: 2em;
+          line-height: 1em;
+        }
+      }
+    </context-style>
+    <img src="">
+    <div>Bar</div>
+  </template>
+  <template id="graphic">
+    <style>
+      :host {
+        display: inline-block;
+        border-radius: 50%;
+        overflow: hidden;
+        width: 2em;
+        height: 2em;
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <context-style>
+      @context (foobar > 50) {
+        img {
+          filter: grayscale(100%);
+        }
+      }
+    </context-style>
+    <img src="">
+  </template>
+  <script>
+    window.addEventListener('WebComponentsReady', function () {
+      class AdaptivePerson extends awc.AdaptiveComponent(HTMLElement) {
+        constructor() {
+          super();
+        }
+
+        static get observedAttributes() {
+          return ['name', 'picture'];
+        }
+
+        get name() {
+          return this.getAttribute('name');
+        }
+
+        set name(val) {
+          this.setAttribute('name', val);
+        }
+
+        get picture() {
+          return this.getAttribute('picture');
+        }
+
+        set picture(val) {
+          this.setAttribute('picture', val);
+        }
+
+        attributeChangedCallback(name, oldValue, newValue) {
+          super.attributeChangedCallback(name, oldValue, newValue);
+          this._update();
+        }
+
+        performAdaptation(profile) {
+          super.performAdaptation(profile);
+          if (window.ShadyCSS) {
+            window.ShadyCSS.styleSubtree(this);
+          }
+          this._update();
+        }
+
+        _update() {
+          if (this._currentVariant != null) {
+            this._currentVariant.name = this.name;
+            this._currentVariant.picture = this.picture;
+          }
+        }
+      }
+
+      class TextPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#text');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'text';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._initial = this.contentRoot.querySelector("div");
+        }
+
+        set name(val) {
+          this._initial.innerText = val.substring(0, 1);
+        }
+      }
+
+      class MixedPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#mixed');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'mixed';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._picture = this.contentRoot.querySelector("img");
+          this._name = this.contentRoot.querySelector("div");
+        }
+
+        set name(val) {
+          this._name.innerText = val;
+        }
+
+        set picture(val) {
+          this._picture.setAttribute('src', val);
+        }
+      }
+
+      class GraphicPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#graphic');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'graphic';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._picture = this.contentRoot.querySelector("img");
+        }
+
+        set picture(val) {
+          this._picture.setAttribute('src', val);
+        }
+      }
+
+      AdaptivePerson.registerVariant(TextPerson);
+      AdaptivePerson.registerVariant(MixedPerson);
+      AdaptivePerson.registerVariant(GraphicPerson);
+
+      AdaptivePerson.defaultVariant = MixedPerson;
+
+      customElements.define('adaptive-person', AdaptivePerson);
+    });
+    
+    let profilestore = new awc.ProfileStore(true);
+    profilestore.changeProfile({foobar: 0});
+
+    document.addEventListener('DOMContentLoaded', function() {
+      let inputElm = document.querySelector("#in_foo");
+      let outputElm = document.querySelector("#out");
+      inputElm.addEventListener('change', function(e){
+        e.stopPropagation();
+        outputElm.value = `= ${inputElm.value}`;
+        profilestore.changeProfile({foobar: inputElm.value});
+      });
+
+      let inputElmMode = document.querySelector("#in_mode");
+      inputElmMode.addEventListener('change', function(e){
+        e.stopPropagation();
+        profilestore.changeProfile({'display-mode': inputElmMode.value});
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Context Styles in Component Templates</h1>
+  <p>
+    demonstrates how the <code>context-style</code> element can be used for context-dependent styling in 
+    <code>AdaptiveVariant</code> templates. It uses <code>@context</code> rules inside the shadow DOM of 
+    <code>AdaptiveComponent</code>s to fine-tune its appearance.
+  </p>
+  <p>
+    <span style="color: red; font-weight: bold;">Note!</span> This currently only works in native implementations of
+    shadow DOM. Due to limitations in the ShadyCSS polyfill, it does not work with webcomponent.js.
+  </p>
+  <section>
+    <h2>Context property value</h2>
+    <div>
+      <label for="in_foo">foobar</label>
+      <output id="out">= 0</output>
+      <input type="range" id="in_foo" value="0">
+    </div>
+    <div>
+      <label for="in_mode">display-mode</label> =
+      <select id="in_mode">
+        <option value="undefined" selected>undefined</option>
+        <option value="text">Text only</option>
+        <option value="mixed">Text and Graphic</option>
+        <option value="graphic">Graphic only</option>
+      </select>
+    </div>
+  </section>
+  <section>
+    <h2>Rendered component</h2>
+    <adaptive-person name="Anna Schmidt" picture="../assets/avatar-anna.png"></adaptive-person>
+    <adaptive-person name="Ben Müller" picture="../assets/avatar-ben.png"></adaptive-person>
+  </section>
+  <section>
+    <h2>Context style</h2>
+    <p>In the template of the text-only variant:</p>
+    <pre class="code">
+<span class="rule">@context</span> (<span class="feat">foobar</span> &lt; <span class="value">25</span>) {
+  <span class="selector">:host</span> {
+    <span class="feat">background-color</span>: <span class="stringval"></span>white;
+    <span class="feat">color</span>: <span class="stringval"></span>black;
+    <span class="feat">border</span>: <span class="value">1px</span> <span class="stringval">solid</span> <span class="stringval">black</span>;
+  }
+}
+<span class="rule">@context</span> (<span class="feat">foobar</span> &gt; <span class="value">75</span>) {
+  <span class="selector">:host</span> {
+    <span class="feat">background-color</span>: <span class="stringval">black</span>;
+    <span class="feat">color</span>: <span class="stringval">white</span>;
+  }
+}</pre>
+  <p>In the template of the mixed variant:</p>
+  <pre class="code">
+<span class="rule">@context</span> (<span class="feat">foobar</span> &lt; <span class="value"></span>30) {
+  <span class="selector">div</span> {
+    <span class="feat">font-weight</span>: <span class="stringval">bold</span>;
+  }
+}
+<span class="rule">@context</span> (<span class="feat">foobar</span> &gt; <span class="value"></span>80) {
+  <span class="selector">div</span> {
+    <span class="feat">font-size</span>: <span class="value">2em</span>;
+    <span class="feat">line-height</span>: <span class="value">1em</span>;
+  }
+}</pre>
+  <p>In the template of the graphic-only variant:</p>
+  <pre class="code">
+<span class="rule">@context</span> (<span class="feat">foobar</span> &gt; <span class="value">50</span>) {
+  <span class="selector">img</span> {
+    <span class="feat">filter</span>: grayscale(<span class="value">100%</span>);
+  }
+}</pre>
+  </section>
+</body>
+</html>

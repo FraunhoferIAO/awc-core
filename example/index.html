@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adaptive Web Components Examples</title>
+  <link rel="stylesheet" href="assets/basestyles.css">
+</head>
+
+<body>
+  <h1>Adaptive Web Components Examples</h1>
+  <section>
+    <h2>Component Implementation</h2>
+    <ul>
+      <li>
+        <a href="components/templates.html">Variants using Template Elements</a><br> 
+        demonstrates the implementation of an <code>AdaptiveComponent</code> with multiple 
+        <code>AdaptiveVariants</code> each using a specific <code>&lt;template&gt;</code> element.
+      </li>
+      <li>
+        <a href="components/fragments.html">Variants that create Document Fragments</a><br> 
+        demonstrates the implementation of <code>AdaptiveVariant</code>s that create <code>DocumentFragment</code>s 
+        on-the-fly in their <code>template</code> getters.
+      </li>
+    </ul>
+  </section>
+  <section>
+    <h2>Component Usage</h2>
+    <ul>
+      <li>
+        <a href="usage/contextscope.html">Context Scoping with Profile Stores</a><br> 
+        demonstrates how multiple <code>ProfileStore</code>s can be used in one document by attaching them to 
+        different parts of the DOM.
+      </li>
+      <li>
+        <a href="usage/cssvariables.html">CSS Custom Properties in Variants</a><br>
+        demonstrates how to use CSS custom properties (a.k.a. CSS variables) in components.
+      </li>
+    </ul>
+  </section>
+  <section>
+    <h2>Context Style</h2>
+    <ul>
+      <li>
+        <a href="context-style/document.html">Document-wide Context Styles</a><br>
+        demonstrates how the <code>context-style</code> element can be used to define document-wide context-dependent 
+        style rules.
+      </li>
+      <li>
+        <a href="context-style/shadow.html">Context Styles in Component Templates</a><br>
+        demonstrates how the <code>context-style</code> element can be used for context-dependent styling in 
+        <code>AdaptiveVariant</code> templates.
+      </li>
+    </ul>
+  </section>
+  <section>
+    <h2>Additional Documentation</h2>
+    <a href="/doc/index.html">API Documentation</a>
+  </section>
+</body>
+</html>

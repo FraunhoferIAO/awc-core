@@ -1,0 +1,50 @@
+html {
+  background-color:whitesmoke;
+}
+
+body {
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 14px;
+  background-color: white;
+  box-shadow: 1px 1px 5px 1px silver;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 14px;
+}
+
+h1,h2,h3 {
+  font-weight: 300;
+}
+
+section {
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+}
+
+li {
+  margin-top: 0.5rem;
+  margin-bottom: 05.rem;
+}
+
+pre.code {
+  border-left: 3px solid silver;
+  padding: 1em;
+  white-space: pre-wrap;
+}
+
+.code .rule {
+  color: blue;
+}
+.code .feat {
+  color: red;
+}
+.code .value {
+  color: green;
+}
+.code .stringval {
+  color: cornflowerblue;
+}
+.code .selector {
+  color: darkred;
+}

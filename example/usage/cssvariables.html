@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWC-Example: CSS Custom Properties in Variants</title>
+  <link rel="stylesheet" href="../assets/basestyles.css">
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../node_modules/@webcomponents/shadycss/custom-style-interface.min.js"></script>
+
+  <script src="/dist/awc-core.js"></script>
+
+  <template id="text">
+    <style>
+      :host {
+        display: inline-block;
+        border-radius: 50%;
+        background-color: var(--custom-color, lightblue);
+        width: 2em;
+        height: 2em;
+      }
+
+      div {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        line-height: 2em;
+      }
+    </style>
+    <div>Foo</div>
+  </template>
+  <template id="mixed">
+    <style>
+      :host {
+        display: inline-block;
+        height: 2em;
+      }
+
+      img {
+        height: 100%;
+        border-radius: 50%;
+        vertical-align: middle;
+      }
+
+      div {
+        display: inline-block;
+        line-height: 2em;
+        height: 100%;
+        vertical-align: middle;
+      }
+    </style>
+    <img src="">
+    <div>Bar</div>
+  </template>
+  <template id="graphic">
+    <style>
+      :host {
+        display: inline-block;
+        border-radius: 50%;
+        overflow: hidden;
+        width: 2em;
+        height: 2em;
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <img src="">
+  </template>
+  <script>
+    window.addEventListener('WebComponentsReady', function () {
+      class AdaptivePerson extends awc.AdaptiveComponent(HTMLElement) {
+        constructor() {
+          super();
+        }
+
+        static get observedAttributes() {
+          return ['name', 'picture'];
+        }
+
+        get name() {
+          return this.getAttribute('name');
+        }
+
+        set name(val) {
+          this.setAttribute('name', val);
+        }
+
+        get picture() {
+          return this.getAttribute('picture');
+        }
+
+        set picture(val) {
+          this.setAttribute('picture', val);
+        }
+
+        attributeChangedCallback(name, oldValue, newValue) {
+          super.attributeChangedCallback(name, oldValue, newValue);
+          this._update();
+        }
+
+        performAdaptation(profile) {
+          super.performAdaptation(profile);
+          if (window.ShadyCSS) {
+            window.ShadyCSS.styleSubtree(this);
+          }
+          this._update();
+        }
+
+        _update() {
+          if (this._currentVariant != null) {
+            this._currentVariant.name = this.name;
+            this._currentVariant.picture = this.picture;
+          }
+        }
+      }
+
+      class TextPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#text');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'text';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._initial = this.contentRoot.querySelector("div");
+        }
+
+        set name(val) {
+          this._initial.innerText = val.substring(0, 1);
+        }
+      }
+
+      class MixedPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#mixed');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'mixed';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._picture = this.contentRoot.querySelector("img");
+          this._name = this.contentRoot.querySelector("div");
+        }
+
+        set name(val) {
+          this._name.innerText = val;
+        }
+
+        set picture(val) {
+          this._picture.setAttribute('src', val);
+        }
+      }
+
+      class GraphicPerson extends awc.AdaptiveVariant {
+        constructor() {
+          super();
+        }
+
+        get template() {
+          let tmpl = document.querySelector('template#graphic');
+          return tmpl.content;
+        }
+
+        static matches(context) {
+          return context['display-mode'] == 'graphic';
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+
+          this._picture = this.contentRoot.querySelector("img");
+        }
+
+        set picture(val) {
+          this._picture.setAttribute('src', val);
+        }
+      }
+
+      AdaptivePerson.registerVariant(TextPerson);
+      AdaptivePerson.registerVariant(MixedPerson);
+      AdaptivePerson.registerVariant(GraphicPerson);
+
+      AdaptivePerson.defaultVariant = MixedPerson;
+
+      customElements.define('adaptive-person', AdaptivePerson);
+
+      window.ShadyCSS.CustomStyleInterface.addCustomStyle(document.querySelector('style.custom'));
+    });
+
+    let profilestore = new awc.ProfileStore(true);
+
+    document.addEventListener('DOMContentLoaded', function () {
+      let inputElm = document.querySelector("#in");
+      inputElm.addEventListener('change', function (e) {
+        e.stopPropagation();
+        profilestore.changeProfile({ 'display-mode': inputElm.value });
+      });
+    });
+  </script>
+
+  <style class="custom">
+    adaptive-person {
+      display: block;
+      font-size: 2rem;
+      margin: 1rem;
+    }
+
+    #anna {
+      --custom-color: pink;
+    }
+
+    #ben {
+      --custom-color: lightgreen;
+    }
+  </style>
+</head>
+<body>
+  <h1>CSS Custom Properties in Variants</h1>
+  <p>
+    This example demonstrates how to use CSS custom properties (a.k.a. CSS variables) in components. It uses the 
+    <code>CustomStyleInterface</code> of <a href="https://github.com/webcomponents/shadycss#about-customstyleinterface" target="_blank">webcomponents.js</a> so shim this feature in browsers that do not natively 
+    implement it (see <a href="https://caniuse.com/#feat=css-variables" target="_blank">caniuse.com</a>).
+  </p>
+  <section>
+    <h2>Context property value</h2>
+    <label for="in">display-mode</label> =
+    <select id="in">
+      <option value="undefined" selected>undefined</option>
+      <option value="text">Text only</option>
+      <option value="mixed">Text and Graphic</option>
+      <option value="graphic">Graphic only</option>
+    </select>
+  </section>
+  <section>
+    <h2>Rendered component</h2>
+    <adaptive-person id="anna" name="Anna Schmidt" picture="../assets/avatar-anna.png"></adaptive-person>
+    <adaptive-person id="ben" name="Ben Müller" picture="../assets/avatar-ben.png"></adaptive-person>
+  </section>
+  <section>
+    <h2>Styles</h2>
+    <p>In the template of the text-only variant:</p>
+    <pre class="code">
+<span class="selector">:host</span> {
+  <span class="feat">background-color</span>: var(<span class="feat">--custom-color</span>, <span class="stringval">lightblue</span>);
+}</pre>
+    <p>In the document stylesheet:</p>
+    <pre class="code">
+<span class="selector">#anna</span> {
+  <span class="feat">--custom-color</span>: <span class="stringval">pink</span>;
+}
+
+<span class="selector">#ben</span> {
+  <span class="feat">--custom-color</span>: <span class="stringval">lightgreen</span>;
+}</pre>
+  </section>
+</body>
+</html>
